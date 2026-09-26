@@ -13,6 +13,9 @@ typedef struct SUDOKU_NODE {
   int value;
   int row; 
   int column;
+  struct SUDOKU_NODE** horizontal;
+  struct SUDOKU_NODE** vertical;
+  struct SUDOKU_NODE** group;
 } SUDOKU_NODE;
 
 typedef struct SUDOKU {
@@ -27,8 +30,10 @@ void free_sudoku(SUDOKU* sudoku);
 void show_sudoku(const SUDOKU* sudoku);
 int generate_sudoku_file();
 int read_sudoku_from_file(SUDOKU* sudoku);
+int get_node_possibilities(const SUDOKU_NODE* node, int* array_possibilities);
+SUDOKU_NODE* get_node_from_coordinates(SUDOKU* sudoku, int row, int column);
+
 int menu();
-int option_game();
 int gameloop();
 
 #endif

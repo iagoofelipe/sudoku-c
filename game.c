@@ -4,6 +4,7 @@
 
 SUDOKU* new_sudoku() {
   SUDOKU* sudoku = malloc(sizeof(SUDOKU));
+  SUDOKU_NODE* node;
 
   for (int i=0; i<SUDOKU_NUM_ITEMS; i++) {
     sudoku->nodes[i].value = 0;
@@ -18,10 +19,14 @@ SUDOKU* new_sudoku() {
 
     for (int j=0; j<SUDOKU_NUM_GROUP_ITEMS; j++) {
       // populating horizontal values
-      sudoku->horizontals[i][j] = &sudoku->nodes[i * SUDOKU_NUM_GROUP_ITEMS + j];
+      node = &sudoku->nodes[i * SUDOKU_NUM_GROUP_ITEMS + j];
+      sudoku->horizontals[i][j] = node;
+      node->horizontal = sudoku->horizontals[i];
       
       // populating vertical vallues
-      sudoku->verticals[i][j] = &sudoku->nodes[j * SUDOKU_NUM_GROUP_ITEMS + i];
+      node = &sudoku->nodes[j * SUDOKU_NUM_GROUP_ITEMS + i];
+      sudoku->verticals[i][j] = node;
+      node->vertical = sudoku->verticals[i];
     }
   }
 
@@ -36,7 +41,10 @@ SUDOKU* new_sudoku() {
             index = row * SUDOKU_NUM_GROUP_ITEMS + col,
             i = group_row * SUDOKU_QUADRANT + group_col,
             j = cell_row * SUDOKU_QUADRANT + cell_col;
-          sudoku->groups[i][j] = &sudoku->nodes[index];
+        
+          node = &sudoku->nodes[index];
+          sudoku->groups[i][j] = node;
+          node->group = sudoku->groups[i];
         }
       }
     }
@@ -125,6 +133,39 @@ int read_sudoku_from_file(SUDOKU* sudoku) {
   return 1;
 }
 
+int get_node_possibilities(const SUDOKU_NODE* node, int* array_possibilities) {
+  int index = 0;
+
+  for (int possibility=1; possibility <= SUDOKU_NUM_GROUP_ITEMS; possibility++) {
+    int found = 0;
+    
+    // checking if it exists in any place (group, horizontal or vertical)
+    for (int i=0; i < SUDOKU_NUM_GROUP_ITEMS; i++) {
+      if (
+        node->group[i]->value == possibility ||
+        node->horizontal[i]->value == possibility ||
+        node->vertical[i]->value == possibility
+      ) {
+          found = 1;
+          break;
+        }
+    }
+
+    if (!found)
+      array_possibilities[index++] = possibility;
+  }
+    
+  return index;
+}
+
+SUDOKU_NODE* get_node_from_coordinates(SUDOKU* sudoku, int row, int column)
+{
+  int index = (row-1) * SUDOKU_NUM_GROUP_ITEMS + (column-1);
+  if (index >= SUDOKU_NUM_ITEMS)
+    return NULL;
+  return &sudoku->nodes[index];
+}
+
 int menu() {
   system("cls");
   printf("----------------------------------\n");
@@ -147,22 +188,65 @@ int menu() {
 }
 
 int option_game() {
-  system("cls");
   
   SUDOKU* sudoku = new_sudoku();
   if (!sudoku) {
     return 0;
   }
-
+  
   if (!read_sudoku_from_file(sudoku)) {
     free_sudoku(sudoku);
     return 0;
   }
-
+  
+  system("cls");
   show_sudoku(sudoku);
-  free_sudoku(sudoku);
-  system("PAUSE");
+  printf("See the possibilities in each line (0 to return)\n\n");
 
+  int row = 0, col = 0;
+
+  for (;;) {
+
+    // not first loop, go cursors up and clean the line 5 times
+    if (row != 0)
+      printf("\033[A\033[2K\033[A\033[2K\033[A\033[2K\033[A\033[2K\033[A\033[2K");
+
+    printf("Row: ");
+    scanf("%d", &row);
+  
+    if (!row)
+      break;
+  
+    printf("Column: ");
+    scanf("%d", &col);
+
+    if (row < 1 || col < 1 || row > SUDOKU_NUM_GROUP_ITEMS || col > SUDOKU_NUM_GROUP_ITEMS) {
+      printf("Invalid entries\n\n");
+      system("PAUSE");
+      continue;
+    }
+
+    const SUDOKU_NODE* node = get_node_from_coordinates(sudoku, row, col);
+    if (node->value) {
+      printf("The value %d is already set\n\n", node->value);
+      system("PAUSE");
+      continue;
+    }
+
+    
+    printf("The possibilites to row %d and column %d are [", row, col);
+    
+    int array_possibilites[SUDOKU_NUM_GROUP_ITEMS],
+      len = get_node_possibilities(node, array_possibilites);
+    
+      for (int i=0; i<len; i++)
+        printf(i+1 == len? "%d" : "%d, ", array_possibilites[i]);
+
+    printf("]\n\n");
+    system("PAUSE");
+  }
+
+  free_sudoku(sudoku);
   return 1;
 }
 
