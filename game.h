@@ -23,6 +23,8 @@ typedef struct SUDOKU {
   SUDOKU_NODE** horizontals[SUDOKU_NUM_GROUP_ITEMS];
   SUDOKU_NODE** verticals[SUDOKU_NUM_GROUP_ITEMS];
   SUDOKU_NODE** groups[SUDOKU_NUM_GROUP_ITEMS];
+  int indexes_empty_nodes[SUDOKU_NUM_GROUP_ITEMS];
+  int num_empty_nodes;
 } SUDOKU;
 
 SUDOKU* new_sudoku();
@@ -31,6 +33,8 @@ void show_sudoku(const SUDOKU* sudoku);
 int generate_sudoku_file();
 int read_sudoku_from_file(SUDOKU* sudoku);
 int get_node_possibilities(const SUDOKU_NODE* node, int* array_possibilities);
+void update_empty_nodes(SUDOKU* sudoku);
+int get_new_values(SUDOKU* sudoku);
 SUDOKU_NODE* get_node_from_coordinates(SUDOKU* sudoku, int row, int column);
 
 int menu();
