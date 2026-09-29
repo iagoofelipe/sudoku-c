@@ -19,9 +19,7 @@ SUDOKU* new_sudoku() {
 
     for (int j=0; j<SUDOKU_NUM_GROUP_ITEMS; j++) {
       node->possibilities[j] = j+1;
-      node->possibilities_by_index[j] = 1;
     }
-    
   }
 
   for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
@@ -165,6 +163,10 @@ void update_node_possibilities(SUDOKU_NODE *node)
     return;
 
   // int count_possibility_numbers[SUDOKU_NUM_GROUP_ITEMS] = {0};
+  int possibilities_by_index[SUDOKU_NUM_GROUP_ITEMS];
+
+  // for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++)
+  //   possibilities_by_index[i] = 1;
 
   for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
     SUDOKU_NODE* group_parent = node->group[i];
@@ -173,29 +175,26 @@ void update_node_possibilities(SUDOKU_NODE *node)
       v_val = node->vertical[i]->value,
       h_val = node->horizontal[i]->value;
 
-    if (g_val) node->possibilities_by_index[g_val-1] = 0;
+    if (g_val) possibilities_by_index[g_val-1] = 0;
     // else for (int j=0; j<group_parent->num_possibilities; j++)
     //   count_possibility_numbers[group_parent->possibilities[j]-1]++;
     
-    if (v_val) node->possibilities_by_index[v_val-1] = 0;
-    if (h_val) node->possibilities_by_index[h_val-1] = 0;
+    if (v_val) possibilities_by_index[v_val-1] = 0;
+    if (h_val) possibilities_by_index[h_val-1] = 0;
   }
 
   int count = 0;
   for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
-    if (node->possibilities_by_index[i])
-      node->possibilities[count++] = i+1;
+    if (possibilities_by_index[i])
+      // if (count_possibility_numbers[i] == 1) {
+      //   count = 0;
+      //   node->possibilities[0] = i+1;
+      //   break;
+      // }
+      // else
+        node->possibilities[count++] = i+1;
   }
 
-  // TODO: otimizar loops
-  // for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
-  //   if (count_possibility_numbers[i] == 1 && node->possibilities_by_index[i]) {
-  //     node->num_possibilities = 1;
-  //     node->possibilities[0] = i+1;
-  //     return;
-  //   }
-  // }
-  
   node->num_possibilities = count;
 }
 

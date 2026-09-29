@@ -15,7 +15,6 @@ typedef struct SUDOKU_NODE {
   int column;
   int index;
   int possibilities[SUDOKU_NUM_GROUP_ITEMS];
-  int possibilities_by_index[SUDOKU_NUM_GROUP_ITEMS];
   int num_possibilities;
   struct SUDOKU_NODE** horizontal;
   struct SUDOKU_NODE** vertical;
