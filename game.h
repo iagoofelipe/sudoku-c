@@ -31,7 +31,7 @@ typedef struct SUDOKU {
   int num_empty_nodes;
 } SUDOKU;
 
-SUDOKU* new_sudoku(int preload_data);
+SUDOKU* new_sudoku();
 void free_sudoku(SUDOKU* sudoku);
 void show_sudoku(const SUDOKU* sudoku);
 int generate_sudoku_file();

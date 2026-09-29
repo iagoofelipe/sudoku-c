@@ -2,27 +2,26 @@
 #include <stdio.h>
 #include "game.h"
 
-SUDOKU* new_sudoku(int preload_data) {
+SUDOKU* new_sudoku() {
   SUDOKU* sudoku = malloc(sizeof(SUDOKU));
   SUDOKU_NODE* node;
   sudoku->num_empty_nodes = SUDOKU_NUM_GROUP_ITEMS;
   
   for (int i=0; i<SUDOKU_NUM_ITEMS; i++) {
+    sudoku->indexes_empty_nodes[i] = i;
+    
     node = &sudoku->nodes[i];
     node->row = i / SUDOKU_NUM_GROUP_ITEMS;
     node->column = i % SUDOKU_NUM_GROUP_ITEMS;
     node->index = i;
     node->num_possibilities = SUDOKU_NUM_GROUP_ITEMS;
+    node->value = 0;
 
     for (int j=0; j<SUDOKU_NUM_GROUP_ITEMS; j++) {
       node->possibilities[j] = j+1;
       node->possibilities_by_index[j] = 1;
     }
     
-    if (preload_data) {
-      sudoku->indexes_empty_nodes[i] = i;
-      node->value = 0;
-    }
   }
 
   for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
@@ -165,48 +164,37 @@ void update_node_possibilities(SUDOKU_NODE *node)
   if (node->value)
     return;
 
-  // int aux_possibilities[SUDOKU_NUM_GROUP_ITEMS];
   // int count_possibility_numbers[SUDOKU_NUM_GROUP_ITEMS] = {0};
 
-  // for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++)
-  //   aux_possibilities[i] = 1;
-
   for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
-    SUDOKU_NODE* group = node->group[i];
+    SUDOKU_NODE* group_parent = node->group[i];
     int
-      g_val = group->value,
+      g_val = group_parent->value,
       v_val = node->vertical[i]->value,
       h_val = node->horizontal[i]->value;
 
     if (g_val) node->possibilities_by_index[g_val-1] = 0;
-    // else {
-    //   for (int j=0; j<group->num_possibilities; j++) {
-    //     count_possibility_numbers[group->possibilities[j]-1]++;
-    //   }
-    // }
+    // else for (int j=0; j<group_parent->num_possibilities; j++)
+    //   count_possibility_numbers[group_parent->possibilities[j]-1]++;
+    
     if (v_val) node->possibilities_by_index[v_val-1] = 0;
     if (h_val) node->possibilities_by_index[h_val-1] = 0;
   }
 
-  // check if there is some number with only one possibility
-  // int has_only_number = 0;
-  // for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
-  //   if (count_possibility_numbers[i] == 1) {
-  //     has_only_number = 1;
-  //     break;
-  //   }
-  // }
-
   int count = 0;
   for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
-    // if (has_only_number) {
-    //   if (count_possibility_numbers[i] == 1)
-    //     node->possibilities[count++] = i+1;
-    // } else {
-      if (node->possibilities_by_index[i])
+    if (node->possibilities_by_index[i])
       node->possibilities[count++] = i+1;
-    // }
   }
+
+  // TODO: otimizar loops
+  // for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
+  //   if (count_possibility_numbers[i] == 1 && node->possibilities_by_index[i]) {
+  //     node->num_possibilities = 1;
+  //     node->possibilities[0] = i+1;
+  //     return;
+  //   }
+  // }
   
   node->num_possibilities = count;
 }
@@ -287,7 +275,7 @@ int menu() {
 
 int option_game() {
   
-  SUDOKU* sudoku = new_sudoku(0);
+  SUDOKU* sudoku = new_sudoku();
   if (!sudoku) {
     return 0;
   }
@@ -353,6 +341,49 @@ int option_game() {
     show_sudoku(sudoku);
 
     printf("\n");
+    system("PAUSE");
+  }
+  else if (option == 3) {
+    show_sudoku(sudoku);
+    const SUDOKU_NODE* node = get_node_from_coordinates(sudoku, 5, 3);
+
+    if (node->value) {
+      printf("<Node row=%d column=%d value=%d>\n\n", node->row+1, node->column+1, node->value);
+      system("PAUSE");
+      free_sudoku(sudoku);
+      return 1;
+    }
+
+    printf("<Node row=%d column=%d possibilities(%d)=[", node->row+1, node->column+1, node->num_possibilities);
+    for (int j=0; j<node->num_possibilities; j++)
+      printf("%d ", node->possibilities[j]);
+    printf("]>\n");
+
+    int count_possibility_numbers[SUDOKU_NUM_GROUP_ITEMS] = {0};
+
+    for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
+      SUDOKU_NODE* group_parent = node->group[i];
+      if (!group_parent->value) {
+        printf("Index: %d [", i);
+        for (int j=0; j<group_parent->num_possibilities; j++) {
+          count_possibility_numbers[group_parent->possibilities[j]-1]++;
+          printf("%d ", group_parent->possibilities[j]);
+        }
+        printf("]\n");
+      }
+    }
+
+    printf("<Group count_possibility_numbers=[");
+    for (int j=0; j<SUDOKU_NUM_GROUP_ITEMS; j++)
+      printf("%d ", count_possibility_numbers[j]);
+    printf("]>\n");
+
+    for (int i=0; i<SUDOKU_NUM_GROUP_ITEMS; i++) {
+      if (count_possibility_numbers[i] == 1) {
+        printf("the number %d has just one valid place\n\n", i+1);
+      }
+    }
+
     system("PAUSE");
   }
 
